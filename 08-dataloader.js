@@ -28,10 +28,7 @@ const User = new GraphQLObjectType({
             type: UserMetadata,
             resolve: ({id}, variables, context) => {
                 console.log('resolver');
-                return { metadata: {
-                    firstName: '32432',
-                }};
-                // return context.load({id});
+                return context.load({id});
             }
         }
     }
@@ -43,6 +40,23 @@ const Query = new GraphQLObjectType({
         users: {
             type: GraphQLList(User),
             resolve: (_2, _1, context) => {
+
+                const resolveList = [];
+                const idList = [];
+
+                context.load = ({id}) => {
+                    idList.push({id});
+                    return new Promise((resolve) => {
+                        resolveList.push(resolve);
+                    })
+                }
+
+                queueMicrotask(() => {
+                    console.log(idList);
+                    resolveList.forEach((resolve) => {
+                        resolve({firstName: 'loaded from parent resolver', lastName: 'loaded from parent controller'});
+                    });
+                });
                 return [{ id: 1 }, { id: 2 }];
             }
         }
